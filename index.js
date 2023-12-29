@@ -3,9 +3,15 @@ const config = require('./config.json');
 const fs = require('node:fs');
 const http = require('node:http');
 
-const app = require('express')();
+const express = require('express');
 const session = require('express-session');
-app.use(session({
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const socketio = require('socket.io');
+const RateLimit = require('express-rate-limit');
+
+const app = express();
+const sessions = session({
     secret: config.settings.cookieSecret,
     resave: true,
     saveUninitialized: true,
@@ -15,33 +21,39 @@ app.use(session({
         secure: true,
         maxAge: 60000,
     },
-}));
+});
+app.use(sessions);
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+const limiter = RateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 100,
+});
+app.use(limiter);
+app.use(express.json());
+app.set('trust proxy', 1);
 
 const server = http.createServer(app);
-const { Server } = require("socket.io");
+const io = new socketio.Server(server);
+io.engine.use(sessions);
 
-const io = new Server(server);
-io.engine.use(session);
-
-app.get('/', async function (req, res) {
-    res.set("Content-Type", "text/html");
-    res.send(await fs.readFileSync('./assets/web/index.html'));
+server.listen(config.settings.port, () => {
+    console.log(`Server started on ${config.settings.port}`);
+    return;
 });
 
+app.get('/', async function (req, res) {
+    res.set('Content-Type', 'text/html');
+    res.send(await fs.readFileSync('./assets/web/index.html'));
+});
 app.get('/assets/style.css', async function (req, res) {
-    res.set("Content-Type", "text/css");
+    res.set('Content-Type', 'text/css');
     res.send(await fs.readFileSync('./assets/web/style.css'));
 });
 app.get('/assets/index.js', async function (req, res) {
-    res.set("Content-Type", "text/javascript");
+    res.set('Content-Type', 'text/javascript');
     res.send(await fs.readFileSync('./assets/web/index.js'));
 });
-
-server.listen(config.settings.port, function () {
-    console.log(`I'm currently listening at ${config.settings.port}`);
-});
-
-app.set('trust-proxy', 1);
 
 io.on('connection', (socket) => {
     console.log('A user connected');

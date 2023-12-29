@@ -1,5 +1,6 @@
 const socket = io();
 
+var audiostatus = "stop";
 const startBtn = document.querySelector('#start-btn');
 const stopBtn = document.querySelector('#stop-btn');
 const resultDiv = document.querySelector('#result-div');
@@ -8,22 +9,38 @@ const recognition = new SpeechRecognition();
 recognition.interimResults = false;
 recognition.continuous = true;
 let count = 0;
-recognition.onresult = (event) => {
-    if (event.results[count].isFinal) {
-        const result = event.results[count][0].transcript;
-        count++;
-        resultDiv.innerHTML = result;
-    } else {
-        count++;
+
+recognition.addEventListener('speechstart', function () {
+    count = 0;
+});
+
+recognition.addEventListener('speechend', function () {
+    count = 0;
+    try {
+        recognition.start();
+    } catch (err) {
         return;
     }
+});
+
+recognition.onresult = (event) => {
+    const result = event.results[count][0].transcript;
+    count++;
+    resultDiv.innerHTML = result;
+    return;
 }
 
-startBtn.onclick = () => {
-    recognition.start();
-    count = 0;
-}
-stopBtn.onclick = () => {
-    recognition.stop();
+startBtn.onclick = async () => {
+    if (audiostatus === "stop") {
+        audiostatus = "start";
+        try {
+            recognition.start();
+        } catch (err) {
+            return;
+        }
+    } else {
+        recognition.stop();
+        audiostatus = "stop";
+    }
     count = 0;
 }
