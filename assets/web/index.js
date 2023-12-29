@@ -27,6 +27,7 @@ recognition.onresult = (event) => {
     const result = event.results[count][0].transcript;
     count++;
     resultDiv.innerHTML = result;
+    socket.send('result', result);
     return;
 }
 

@@ -57,6 +57,9 @@ app.get('/assets/index.js', async function (req, res) {
 
 io.on('connection', (socket) => {
     console.log('A user connected');
+    socket.on('result', function (data) {
+        console.log(data);
+    });
 });
 
 process.on('uncaughtException', function (err) {
