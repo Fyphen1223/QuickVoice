@@ -1,0 +1,16 @@
+{
+  "settings": {
+    "secure": true,
+    "port": 443,
+    "useOpenAIAPI": false,
+    "cookieSecret": "somerandomstrings"
+  },
+  "tokens": {
+    "news": "",
+    "openai": "",
+    "spotify": {
+      "clientId": "",
+      "clientSecret": ""
+    }
+  }
+}
